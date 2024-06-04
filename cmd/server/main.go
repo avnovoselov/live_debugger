@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"live_debugger/internal/server"
+
+	"github.com/avnovoselov/live_debugger/internal/server"
 )
 
 func main() {

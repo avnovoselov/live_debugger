@@ -6,9 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"live_debugger/internal"
-	"live_debugger/internal/request"
 	"net/http"
+
+	"github.com/avnovoselov/live_debugger/internal"
+	"github.com/avnovoselov/live_debugger/internal/request"
 )
 
 var (

@@ -1,4 +1,4 @@
-module live_debugger
+module github.com/avnovoselov/live_debugger
 
 go 1.22.0
 

@@ -1,11 +1,13 @@
 package queue_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"sync"
 	"testing"
 
-	"live_debugger/internal/queue"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/avnovoselov/live_debugger/internal/queue"
 )
 
 func TestQueue_Append_Size(t *testing.T) {
@@ -35,15 +37,15 @@ func TestQueue_GetAll(t *testing.T) {
 	q := queue.NewQueue[int](size)
 
 	q.Append(1)
-	require.Equal(t, []int{1}, q.GetAll())
+	assert.Equal(t, []int{1}, q.GetAll())
 	q.Append(2)
-	require.Equal(t, []int{1, 2}, q.GetAll())
+	assert.Equal(t, []int{1, 2}, q.GetAll())
 	q.Append(3)
-	require.Equal(t, []int{1, 2, 3}, q.GetAll())
+	assert.Equal(t, []int{1, 2, 3}, q.GetAll())
 	q.Append(4)
-	require.Equal(t, []int{2, 3, 4}, q.GetAll())
+	assert.Equal(t, []int{2, 3, 4}, q.GetAll())
 	q.Append(5)
-	require.Equal(t, []int{3, 4, 5}, q.GetAll())
+	assert.Equal(t, []int{3, 4, 5}, q.GetAll())
 }
 
 func TestQueue_GetByOffset(t *testing.T) {
@@ -98,12 +100,12 @@ func TestQueue_GetByOffset(t *testing.T) {
 			element, newOffset, err := q.GetByOffset(testCase.offset)
 
 			if testCase.expectedErr != nil {
-				require.ErrorIs(t, err, testCase.expectedErr)
-				require.Equal(t, testCase.expectedNewOffset, newOffset)
+				assert.ErrorIs(t, err, testCase.expectedErr)
+				assert.Equal(t, testCase.expectedNewOffset, newOffset)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t, testCase.expectedNewOffset, newOffset)
-				require.Equal(t, testCase.expectedElement, element)
+				assert.NoError(t, err)
+				assert.Equal(t, testCase.expectedNewOffset, newOffset)
+				assert.Equal(t, testCase.expectedElement, element)
 			}
 		})
 	}
