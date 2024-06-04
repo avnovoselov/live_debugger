@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +11,13 @@ import (
 	"github.com/avnovoselov/live_debugger/internal/request"
 )
 
-var (
-	serverError = errors.New("server error")
-)
+//var (
+//	serverError = errors.New("server error")
+//)
 
-const (
-	tempDirectoryTemplate = "live_debugger_%s"
-)
+//const (
+//	tempDirectoryTemplate = "live_debugger_%s"
+//)
 
 type Server struct {
 	version internal.Version
@@ -52,6 +51,6 @@ func (s *Server) Run(ctx context.Context) {
 	fmt.Println(err)
 }
 
-func (s *Server) tempDirectory() string {
-	return fmt.Sprintf(tempDirectoryTemplate, s.version)
-}
+//func (s *Server) tempDirectory() string {
+//	return fmt.Sprintf(tempDirectoryTemplate, s.version)
+//}
