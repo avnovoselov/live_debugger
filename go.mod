@@ -1,6 +1,6 @@
 module github.com/avnovoselov/live_debugger
 
-go 1.22.0
+go 1.22
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
