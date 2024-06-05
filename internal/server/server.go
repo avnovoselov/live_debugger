@@ -1,56 +1,37 @@
 package server
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 
-	"github.com/avnovoselov/live_debugger/internal"
-	"github.com/avnovoselov/live_debugger/internal/request"
+	"github.com/avnovoselov/live_debugger/internal/server/internal"
 )
 
-//var (
-//	serverError = errors.New("server error")
-//)
-
-//const (
-//	tempDirectoryTemplate = "live_debugger_%s"
-//)
-
 type Server struct {
-	version internal.Version
-	queue   []request.Request
+	version     string
+	inLocation  string
+	outLocation string
+	address     string
+	inHandler   httpHandler
+	outHandler  httpHandler
 }
 
-func NewServer(version internal.Version) *Server {
+func NewServer(version string, inLocation string, outLocation string, address string, inHandler httpHandler, outHandler httpHandler) *Server {
+	inLocation = internal.NormalizeLocation(inLocation)
+	outLocation = internal.NormalizeLocation(outLocation)
+
 	return &Server{
-		version: version,
-		queue:   make([]request.Request, 100),
+		address:     address,
+		version:     version,
+		inLocation:  inLocation,
+		outLocation: outLocation,
+		inHandler:   inHandler,
+		outHandler:  outHandler,
 	}
 }
 
-func (s *Server) Run(ctx context.Context) {
-	http.HandleFunc("/log", func(res http.ResponseWriter, req *http.Request) {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			fmt.Println(err)
-			_, _ = res.Write([]byte("read all error"))
-		}
+func (s *Server) Run() error {
+	http.Handle(s.inLocation, s.inHandler)
+	http.Handle(s.outLocation, s.outHandler)
 
-		dto := request.Request{}
-		err = json.Unmarshal(body, &dto)
-		if err != nil {
-			fmt.Println(err, string(body))
-			_, _ = res.Write([]byte("json unmarshall error"))
-		}
-	})
-
-	err := http.ListenAndServe(":8088", nil)
-	fmt.Println(err)
+	return http.ListenAndServe(s.address, nil)
 }
-
-//func (s *Server) tempDirectory() string {
-//	return fmt.Sprintf(tempDirectoryTemplate, s.version)
-//}

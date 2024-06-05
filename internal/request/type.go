@@ -1,7 +1,7 @@
 package request
 
 type (
-	Level       string
+	Level       int
 	Type        string
 	Message     string
 	Source      string
@@ -9,15 +9,21 @@ type (
 )
 
 const (
-	Info    Level = "INFO"
-	Warning Level = "WARNING"
-	Error   Level = "ERROR"
+	Debug   Level = iota
+	Info    Level = iota
+	Warning Level = iota
+	Error   Level = iota
 )
 
-type Request struct {
+type LogRequest struct {
 	Level       Level       `json:"level"`
 	Type        Type        `json:"type"`
 	Message     Message     `json:"message"`
 	Source      Source      `json:"source"`
 	Fingerprint Fingerprint `json:"fingerprint"`
+}
+
+type LogResponse struct {
+	Offset *uint64 `json:"offset"`
+	Error  *string `json:"error"`
 }
