@@ -1,3 +1,5 @@
 # sample regex patterns
 ignore:
   - "mocks"
+  - "cmd/mockery"
+  - "cmd" # temporary
