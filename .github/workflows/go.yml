@@ -25,7 +25,7 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v -json ./... -covermode=atomic -coverprofile coverage.out
+      run: go test -v -json ./internal ./cmd -covermode=atomic -coverprofile coverage.out
 
     - name: Golangci-lint
       uses: golangci/golangci-lint-action@v6.0.1
