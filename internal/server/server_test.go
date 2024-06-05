@@ -15,7 +15,7 @@ func TestServer_Run(t *testing.T) {
 	version := "1.0.0"
 	inLocation := "/in"
 	outLocation := "/out"
-	address := "127.0.0.1:11000"
+	address := "127.0.0.1:36768"
 	inHandler := mocks.NewHttpHandler(t)
 	outHandler := mocks.NewHttpHandler(t)
 
