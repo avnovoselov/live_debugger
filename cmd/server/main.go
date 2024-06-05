@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/gorilla/websocket"
 
 	"github.com/avnovoselov/live_debugger/internal/queue"
@@ -11,7 +9,6 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
 	upg := &websocket.Upgrader{}
 	q := queue.NewQueue[request.LogRequest](1000)
 
@@ -19,6 +16,5 @@ func main() {
 	outHandler := server.NewInHandler(q, upg)
 
 	s := server.NewServer("1.0.0", "/ws", "/out", "127.0.0.1:8080", inHandler, outHandler)
-	err := s.Run(ctx)
-	fmt.Println(err)
+	s.Run()
 }
