@@ -22,8 +22,3 @@ type LogRequest struct {
 	Source      Source      `json:"source"`
 	Fingerprint Fingerprint `json:"fingerprint"`
 }
-
-type LogResponse struct {
-	Offset *uint64 `json:"offset"`
-	Error  *string `json:"error"`
-}

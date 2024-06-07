@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 )
 
-func ParseJSON(b []byte) (LogRequest, error) {
-	request := LogRequest{}
-	err := json.Unmarshal(b, &request)
+func ParseJSON(b []byte) (req LogRequest, err error) {
+	err = json.Unmarshal(b, &req)
 
-	return request, err
+	return
 }
