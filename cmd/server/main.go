@@ -22,6 +22,7 @@ func main() {
 		panic(err)
 	}
 
+	//nolint:errcheck
 	//goland:noinspection GoUnhandledErrorResult
 	defer logger.Sync()
 
