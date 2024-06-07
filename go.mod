@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/websocket v1.5.1
 	github.com/stretchr/testify v1.9.0
 	github.com/vektra/mockery/v2 v2.43.2
+	go.uber.org/zap v1.27.0
 )
 
 require (
@@ -34,7 +35,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
