@@ -1,4 +1,4 @@
-package request
+package dto
 
 type (
 	Level       int
@@ -15,7 +15,14 @@ const (
 	Error   Level = iota
 )
 
-type LogRequest struct {
+// LogCreatedDTO - server.InHandler outgoing dto
+type LogCreatedDTO struct {
+	Offset *uint64 `json:"offset"`
+	Error  *string `json:"error"`
+}
+
+// LogDTO - server.InHandler incoming dto
+type LogDTO struct {
 	Level       Level       `json:"level"`
 	Type        Type        `json:"type"`
 	Message     Message     `json:"message"`

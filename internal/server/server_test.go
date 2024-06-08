@@ -19,6 +19,8 @@ func TestServer_Run(t *testing.T) {
 	outHandler := mocks.NewHttpHandler(t)
 
 	srv := server.NewServer(version, inLocation, outLocation, address, inHandler, outHandler)
+
+	//nolint:errcheck
 	//goland:noinspection GoUnhandledErrorResult
 	go srv.Run()
 

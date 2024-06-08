@@ -1,9 +1,11 @@
 package internal_test
 
 import (
-	"github.com/avnovoselov/live_debugger/internal/server/internal"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/avnovoselov/live_debugger/internal/server/internal"
 )
 
 func TestNormalizeLocation(t *testing.T) {
@@ -22,6 +24,11 @@ func TestNormalizeLocation(t *testing.T) {
 		{
 			name: "Trim leading slash",
 			in:   "///foo",
+			out:  "/foo",
+		},
+		{
+			name: "Trim trailing slash",
+			in:   "foo//",
 			out:  "/foo",
 		},
 		{

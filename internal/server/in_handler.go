@@ -7,28 +7,30 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
-	"github.com/avnovoselov/live_debugger/internal/request"
-	"github.com/avnovoselov/live_debugger/internal/response"
+	"github.com/avnovoselov/live_debugger/internal/dto"
 	"github.com/avnovoselov/live_debugger/internal/util"
 )
 
+// inHandlerEB - inHandler error builder contains base error
 var inHandlerEB = util.ErrorBuilder(errors.New("in handler error"))
 
 var (
-	InHandlerUnexpectedMessageTypeError = inHandlerEB(errors.New("unexpected message type"))
-	InHandlerUnmarshallRequestError     = inHandlerEB(UnmarshallRequestError)
-	InHandlerMarshallResponseError      = inHandlerEB(MarshallResponseError)
-	InHandlerSendResponseError          = inHandlerEB(errors.New("send response error"))
-	InHandlerWsUpgradeError             = inHandlerEB(errors.New("ws upgrade error"))
+	InHandlerUnexpectedIncomingMessageTypeError = inHandlerEB(errors.New("unexpected incoming message type"))
+	InHandlerUnmarshallRequestError             = inHandlerEB(UnmarshallRequestError)
+	InHandlerMarshallResponseError              = inHandlerEB(MarshallResponseError)
+	InHandlerSendResponseError                  = inHandlerEB(errors.New("send response error"))
+	InHandlerWsUpgradeError                     = inHandlerEB(errors.New("ws upgrade error"))
 )
 
+// InHandler - handler processes incoming logging stream
 type InHandler struct {
-	queue  queue[request.LogRequest]
+	queue  queue[dto.LogDTO]
 	upg    upgrader
 	logger *zap.Logger
 }
 
-func NewInHandler(queue queue[request.LogRequest], upg upgrader, logger *zap.Logger) *InHandler {
+// NewInHandler - InHandler constructor
+func NewInHandler(queue queue[dto.LogDTO], upg upgrader, logger *zap.Logger) *InHandler {
 	return &InHandler{
 		queue:  queue,
 		upg:    upg,
@@ -36,10 +38,11 @@ func NewInHandler(queue queue[request.LogRequest], upg upgrader, logger *zap.Log
 	}
 }
 
+// ServeHTTP - http.Handler interface implementation
 func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
 		conn   *websocket.Conn
-		req    request.LogRequest
+		req    dto.LogDTO
 		err    error
 		offset uint64
 	)
@@ -62,8 +65,11 @@ func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, message, err := conn.ReadMessage()
 
-		fields = append(fields, zap.String("message", string(message)))
-		fields = append(fields, zap.Int("messageType", messageType))
+		fields = append(
+			fields,
+			zap.String("message", string(message)),
+			zap.Int("messageType", messageType),
+		)
 		h.logger.Info("Receive message", fields...)
 
 		if err != nil {
@@ -84,6 +90,8 @@ func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// wsUpgrade - upgrades the HTTP server connection to the WebSocket protocol.
+// Using https://github.com/gorilla/websocket
 func (h InHandler) wsUpgrade(w http.ResponseWriter, r *http.Request) (conn *websocket.Conn, err error) {
 	if conn, err = h.upg.Upgrade(w, r, nil); err != nil {
 		err = errors.Join(InHandlerWsUpgradeError, err)
@@ -92,27 +100,29 @@ func (h InHandler) wsUpgrade(w http.ResponseWriter, r *http.Request) (conn *webs
 	return
 }
 
-func (h InHandler) decodeRequest(messageType int, message []byte) (req request.LogRequest, err error) {
+// decodeRequest - checks messageType and try to parse request body
+func (h InHandler) decodeRequest(messageType int, message []byte) (req dto.LogDTO, err error) {
 	if websocket.TextMessage != messageType {
-		err = InHandlerUnexpectedMessageTypeError
+		err = InHandlerUnexpectedIncomingMessageTypeError
 
 		return
 	}
 
-	if req, err = request.ParseJSON(message); err != nil {
+	if req, err = dto.ParseJSON[dto.LogDTO](message); err != nil {
 		err = errors.Join(InHandlerUnmarshallRequestError, err)
 	}
 
 	return
 }
 
-func (h InHandler) handleMessage(connection *websocket.Conn, req request.LogRequest) (offset uint64, err error) {
+// handleMessage - handle request message and send json encoded response
+func (h InHandler) handleMessage(connection *websocket.Conn, req dto.LogDTO) (offset uint64, err error) {
 	var message []byte
 
 	offset = h.queue.Append(req)
-	res := response.LogResponse{Offset: &offset}
+	res := dto.LogCreatedDTO{Offset: &offset}
 
-	if message, err = response.EncodeJSON(res); err != nil {
+	if message, err = dto.EncodeJSON(res); err != nil {
 		err = errors.Join(InHandlerMarshallResponseError, err)
 
 		return

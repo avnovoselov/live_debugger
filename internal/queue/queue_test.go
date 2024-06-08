@@ -84,7 +84,7 @@ func TestQueue_GetByOffset(t *testing.T) {
 			offset:            100,
 			expectedNewOffset: 4,
 			expectedElement:   0,
-			expectedErr:       queue.NotFoundError,
+			expectedErr:       queue.OffsetNotFoundError,
 		},
 	}
 
@@ -109,4 +109,31 @@ func TestQueue_GetByOffset(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueue_GetLast(t *testing.T) {
+	q := queue.NewQueue[int](30)
+	_, _, err := q.GetLast()
+	require.ErrorIs(t, err, queue.QueueIsEmpty)
+
+	first, second, third := 1, 2, 3
+	q.Append(first)
+
+	e, o, err := q.GetLast()
+	assert.Equal(t, first, e)
+	assert.Equal(t, uint64(0), o)
+
+	q.Append(second)
+	e, o, err = q.GetLast()
+	assert.Equal(t, second, e)
+	assert.Equal(t, uint64(1), o)
+
+	q.Append(third)
+	e, o, err = q.GetLast()
+	assert.Equal(t, third, e)
+	assert.Equal(t, uint64(2), o)
+
+	e, o, err = q.GetLast()
+	assert.Equal(t, third, e)
+	assert.Equal(t, uint64(2), o)
 }

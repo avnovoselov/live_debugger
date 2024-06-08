@@ -6,8 +6,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type queue[T any] interface {
-	Append(element T) uint64
+type queue[Element any] interface {
+	Append(element Element) uint64
+	GetLast() (Element, uint64, error)
 }
 
 type httpHandler interface {
