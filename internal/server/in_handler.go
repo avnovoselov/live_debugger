@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
-	"github.com/avnovoselov/live_debugger/internal/dto"
 	"github.com/avnovoselov/live_debugger/internal/util"
+	"github.com/avnovoselov/live_debugger/pkg/live_debugger"
 )
 
 // inHandlerEB - inHandler error builder contains base error
@@ -24,13 +24,13 @@ var (
 
 // InHandler - handler processes incoming logging stream
 type InHandler struct {
-	queue  queue[dto.LogDTO]
+	queue  queue[live_debugger.LogDTO]
 	upg    upgrader
 	logger *zap.Logger
 }
 
 // NewInHandler - InHandler constructor
-func NewInHandler(queue queue[dto.LogDTO], upg upgrader, logger *zap.Logger) *InHandler {
+func NewInHandler(queue queue[live_debugger.LogDTO], upg upgrader, logger *zap.Logger) *InHandler {
 	return &InHandler{
 		queue:  queue,
 		upg:    upg,
@@ -42,7 +42,7 @@ func NewInHandler(queue queue[dto.LogDTO], upg upgrader, logger *zap.Logger) *In
 func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
 		conn   *websocket.Conn
-		req    dto.LogDTO
+		req    live_debugger.LogDTO
 		err    error
 		offset uint64
 	)
@@ -101,14 +101,14 @@ func (h InHandler) wsUpgrade(w http.ResponseWriter, r *http.Request) (conn *webs
 }
 
 // decodeRequest - checks messageType and try to parse request body
-func (h InHandler) decodeRequest(messageType int, message []byte) (req dto.LogDTO, err error) {
+func (h InHandler) decodeRequest(messageType int, message []byte) (req live_debugger.LogDTO, err error) {
 	if websocket.TextMessage != messageType {
 		err = InHandlerUnexpectedIncomingMessageTypeError
 
 		return
 	}
 
-	if req, err = dto.ParseJSON[dto.LogDTO](message); err != nil {
+	if req, err = live_debugger.ParseJSON[live_debugger.LogDTO](message); err != nil {
 		err = errors.Join(InHandlerUnmarshallRequestError, err)
 	}
 
@@ -116,13 +116,13 @@ func (h InHandler) decodeRequest(messageType int, message []byte) (req dto.LogDT
 }
 
 // handleMessage - handle request message and send json encoded response
-func (h InHandler) handleMessage(connection *websocket.Conn, req dto.LogDTO) (offset uint64, err error) {
+func (h InHandler) handleMessage(connection *websocket.Conn, req live_debugger.LogDTO) (offset uint64, err error) {
 	var message []byte
 
 	offset = h.queue.Append(req)
-	res := dto.LogCreatedDTO{Offset: &offset}
+	res := live_debugger.LogCreatedDTO{Offset: &offset}
 
-	if message, err = dto.EncodeJSON(res); err != nil {
+	if message, err = live_debugger.EncodeJSON(res); err != nil {
 		err = errors.Join(InHandlerMarshallResponseError, err)
 
 		return

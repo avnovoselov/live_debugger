@@ -1,4 +1,4 @@
-package dto_test
+package live_debugger_test
 
 import (
 	"fmt"
@@ -7,23 +7,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/avnovoselov/live_debugger/internal/dto"
+	"github.com/avnovoselov/live_debugger/pkg/live_debugger"
 )
 
 func TestEncodeJSON(t *testing.T) {
 	var expectedID uint64 = 123
 	var expectedErr = "error"
 
-	r1 := dto.LogCreatedDTO{Offset: &expectedID}
-	j1, err := dto.EncodeJSON(r1)
+	r1 := live_debugger.LogCreatedDTO{Offset: &expectedID}
+	j1, err := live_debugger.EncodeJSON(r1)
 	require.NoError(t, err)
 
-	r2 := dto.LogCreatedDTO{}
-	j2, err := dto.EncodeJSON(r2)
+	r2 := live_debugger.LogCreatedDTO{}
+	j2, err := live_debugger.EncodeJSON(r2)
 	require.NoError(t, err)
 
-	r3 := dto.LogCreatedDTO{Error: &expectedErr}
-	j3, err := dto.EncodeJSON(r3)
+	r3 := live_debugger.LogCreatedDTO{Error: &expectedErr}
+	j3, err := live_debugger.EncodeJSON(r3)
 	require.NoError(t, err)
 
 	assert.Equal(t, `{"offset":123,"error":null}`, string(j1))
@@ -35,12 +35,12 @@ func TestParseJSON(t *testing.T) {
 	l, tp, m, src, f := 1, "type-text", "message-text", "source-text", "fingerprint-text"
 	s := []byte(fmt.Sprintf(`{"level":%d,"type":"%s","message":"%s","source":"%s","fingerprint":"%s"}`, l, tp, m, src, f))
 
-	r, err := dto.ParseJSON[dto.LogDTO](s)
+	r, err := live_debugger.ParseJSON[live_debugger.LogDTO](s)
 	require.NoError(t, err)
 
-	assert.Equal(t, r.Level, dto.Level(l))
-	assert.Equal(t, r.Type, dto.Type(tp))
-	assert.Equal(t, r.Message, dto.Message(m))
-	assert.Equal(t, r.Source, dto.Source(src))
-	assert.Equal(t, r.Fingerprint, dto.Fingerprint(f))
+	assert.Equal(t, r.Level, live_debugger.Level(l))
+	assert.Equal(t, r.Type, live_debugger.Type(tp))
+	assert.Equal(t, r.Message, live_debugger.Message(m))
+	assert.Equal(t, r.Source, live_debugger.Source(src))
+	assert.Equal(t, r.Fingerprint, live_debugger.Fingerprint(f))
 }

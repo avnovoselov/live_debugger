@@ -12,7 +12,7 @@ var queueEB = util.ErrorBuilder(errors.New("queue error"))
 
 var (
 	OffsetNotFoundError = queueEB(errors.New("offset not found"))
-	QueueIsEmpty        = queueEB(errors.New("queue is empty"))
+	IsEmpty             = queueEB(errors.New("queue is empty"))
 )
 
 // Queue - sized queue.
@@ -52,7 +52,7 @@ func (q *Queue[Element]) GetAll() []Element {
 
 	r := make([]Element, 0, len(q.elements))
 
-	for i := q.min; i < q.max; i++ {
+	for i := q.min; i <= q.max; i++ {
 		r = append(r, q.elements[i])
 	}
 
@@ -69,8 +69,8 @@ func (q *Queue[Element]) GetByOffset(offset uint64) (Element, uint64, error) {
 	if offset < q.min {
 		return q.elements[q.min], q.min, nil
 	}
-	if offset >= q.max {
-		return *new(Element), q.max - 1, OffsetNotFoundError
+	if offset > q.max {
+		return *new(Element), q.max, OffsetNotFoundError
 	}
 
 	return q.elements[offset], offset, nil
@@ -82,10 +82,10 @@ func (q *Queue[Element]) GetLast() (Element, uint64, error) {
 	defer q.mu.RUnlock()
 
 	if len(q.elements) == 0 {
-		return *new(Element), 0, QueueIsEmpty
+		return *new(Element), 0, IsEmpty
 	}
 
-	return q.elements[q.max-1], q.max - 1, nil
+	return q.elements[q.max], q.max, nil
 }
 
 // Append - put an element to the queues tail and delete oldest
@@ -96,14 +96,16 @@ func (q *Queue[Element]) Append(element Element) uint64 {
 	q.appendElement(element)
 	q.clearOldest()
 
-	// Should use minus one to define the last existing element not a next element
-	return q.max - 1
+	return q.max
 }
 
 // appendElement - places an element to the maps q.max position and increment q.max.
 func (q *Queue[Element]) appendElement(element Element) {
-	q.elements[q.max] = element
 	q.max += 1
+	if 0 == q.min {
+		q.min += 1
+	}
+	q.elements[q.max] = element
 }
 
 // clearOldest - deletes a maps q.min element if the queue size exceeded.

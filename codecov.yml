@@ -2,4 +2,6 @@
 ignore:
   - "mocks"
   - "cmd/mockery"
+  - "cmd/client"
+  - "/pkg/live_debugger/client.go"
   - "cmd" # temporary

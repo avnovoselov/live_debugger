@@ -61,28 +61,28 @@ func TestQueue_GetByOffset(t *testing.T) {
 		{
 			name:              "First element",
 			offset:            2,
-			expectedNewOffset: 2,
+			expectedNewOffset: 3,
 			expectedElement:   3,
 			expectedErr:       nil,
 		},
 		{
 			name:              "Last element",
-			offset:            4,
-			expectedNewOffset: 4,
+			offset:            5,
+			expectedNewOffset: 5,
 			expectedElement:   5,
 			expectedErr:       nil,
 		},
 		{
 			name:              "Old missed element",
 			offset:            0,
-			expectedNewOffset: 2,
+			expectedNewOffset: 3,
 			expectedElement:   3,
 			expectedErr:       nil,
 		},
 		{
 			name:              "Not exists offset",
 			offset:            100,
-			expectedNewOffset: 4,
+			expectedNewOffset: 5,
 			expectedElement:   0,
 			expectedErr:       queue.OffsetNotFoundError,
 		},
@@ -114,26 +114,26 @@ func TestQueue_GetByOffset(t *testing.T) {
 func TestQueue_GetLast(t *testing.T) {
 	q := queue.NewQueue[int](30)
 	_, _, err := q.GetLast()
-	require.ErrorIs(t, err, queue.QueueIsEmpty)
+	require.ErrorIs(t, err, queue.IsEmpty)
 
 	first, second, third := 1, 2, 3
 	q.Append(first)
 
 	e, o, err := q.GetLast()
 	assert.Equal(t, first, e)
-	assert.Equal(t, uint64(0), o)
+	assert.Equal(t, uint64(1), o)
 
 	q.Append(second)
 	e, o, err = q.GetLast()
 	assert.Equal(t, second, e)
-	assert.Equal(t, uint64(1), o)
+	assert.Equal(t, uint64(2), o)
 
 	q.Append(third)
 	e, o, err = q.GetLast()
 	assert.Equal(t, third, e)
-	assert.Equal(t, uint64(2), o)
+	assert.Equal(t, uint64(3), o)
 
 	e, o, err = q.GetLast()
 	assert.Equal(t, third, e)
-	assert.Equal(t, uint64(2), o)
+	assert.Equal(t, uint64(3), o)
 }

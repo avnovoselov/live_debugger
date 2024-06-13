@@ -1,4 +1,4 @@
-package dto
+package live_debugger
 
 type (
 	Level       int

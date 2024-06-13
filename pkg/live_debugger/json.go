@@ -1,4 +1,4 @@
-package dto
+package live_debugger
 
 import "encoding/json"
 
