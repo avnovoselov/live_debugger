@@ -120,20 +120,24 @@ func TestQueue_GetLast(t *testing.T) {
 	q.Append(first)
 
 	e, o, err := q.GetLast()
+	require.NoError(t, err)
 	assert.Equal(t, first, e)
 	assert.Equal(t, uint64(1), o)
 
 	q.Append(second)
 	e, o, err = q.GetLast()
+	require.NoError(t, err)
 	assert.Equal(t, second, e)
 	assert.Equal(t, uint64(2), o)
 
 	q.Append(third)
 	e, o, err = q.GetLast()
+	require.NoError(t, err)
 	assert.Equal(t, third, e)
 	assert.Equal(t, uint64(3), o)
 
 	e, o, err = q.GetLast()
+	require.NoError(t, err)
 	assert.Equal(t, third, e)
 	assert.Equal(t, uint64(3), o)
 }
