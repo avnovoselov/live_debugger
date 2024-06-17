@@ -2,10 +2,10 @@ package server_test
 
 import (
 	"context"
-	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"testing"
 	"time"
 
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"github.com/avnovoselov/live_debugger/internal/server"
 	mocks "github.com/avnovoselov/live_debugger/mocks/server"
 )
