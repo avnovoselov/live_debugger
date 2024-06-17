@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sync"
 
+	"github.com/rs/zerolog/log"
+
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"github.com/avnovoselov/live_debugger/internal/server/internal"
 )
 
@@ -15,9 +17,6 @@ type Server struct {
 	inLocation string
 	// outLocation - outgoing logging stream. Log readers get logs this location
 	outLocation string
-
-	// version - server version
-	version string
 
 	// address - host:port formatted TCP address for the server to listen on
 	address string
@@ -32,13 +31,14 @@ type Server struct {
 }
 
 // NewServer - Server instance constructor
-func NewServer(version string, inLocation string, outLocation string, address string, inHandler httpHandler, outHandler httpHandler) *Server {
-	inLocation = internal.NormalizeLocation(inLocation)
-	outLocation = internal.NormalizeLocation(outLocation)
+func NewServer(configuration configuration.Server, inHandler httpHandler, outHandler httpHandler) *Server {
+	inLocation := internal.NormalizeLocation(configuration.InLocation)
+	outLocation := internal.NormalizeLocation(configuration.OutLocation)
+
+	address := internal.BuildAddress(configuration.IP, configuration.Port)
 
 	return &Server{
 		address:     address,
-		version:     version,
 		inLocation:  inLocation,
 		outLocation: outLocation,
 		inHandler:   inHandler,
@@ -49,6 +49,8 @@ func NewServer(version string, inLocation string, outLocation string, address st
 
 // Run - configure server and start listening http connections
 func (s *Server) Run() {
+	log.Debug().Msg("Run server")
+
 	http.Handle(s.inLocation, s.inHandler)
 	http.Handle(s.outLocation, s.outHandler)
 
@@ -63,7 +65,7 @@ func (s *Server) Run() {
 // Stop - stop server listening http connection
 func (s *Server) Stop(ctx context.Context) {
 	if err := s.server.Shutdown(ctx); err != nil {
-		fmt.Println("shutdown server err: ", err)
+		log.Error().Err(err).Msg("shutdown server error")
 	}
 }
 
@@ -71,6 +73,6 @@ func (s *Server) Stop(ctx context.Context) {
 func (s *Server) serve(wg *sync.WaitGroup) {
 	defer wg.Done()
 	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
-		fmt.Println("ListenAndServe():", err)
+		log.Error().Err(err).Msg("server.ListenAndServe error")
 	}
 }

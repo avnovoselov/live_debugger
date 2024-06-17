@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"github.com/avnovoselov/live_debugger/internal/queue"
 )
 
@@ -16,7 +17,7 @@ func TestQueue_Append_Size(t *testing.T) {
 		retry        = 1000
 	)
 
-	q := queue.NewQueue[int](size)
+	q := queue.NewQueue[int](configuration.Queue{Size: size})
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < retry; i++ {
@@ -34,7 +35,7 @@ func TestQueue_Append_Size(t *testing.T) {
 func TestQueue_GetAll(t *testing.T) {
 	var size uint64 = 3
 
-	q := queue.NewQueue[int](size)
+	q := queue.NewQueue[int](configuration.Queue{Size: size})
 
 	q.Append(1)
 	assert.Equal(t, []int{1}, q.GetAll())
@@ -58,37 +59,13 @@ func TestQueue_GetByOffset(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		{
-			name:              "First element",
-			offset:            2,
-			expectedNewOffset: 3,
-			expectedElement:   3,
-			expectedErr:       nil,
-		},
-		{
-			name:              "Last element",
-			offset:            5,
-			expectedNewOffset: 5,
-			expectedElement:   5,
-			expectedErr:       nil,
-		},
-		{
-			name:              "Old missed element",
-			offset:            0,
-			expectedNewOffset: 3,
-			expectedElement:   3,
-			expectedErr:       nil,
-		},
-		{
-			name:              "Not exists offset",
-			offset:            100,
-			expectedNewOffset: 5,
-			expectedElement:   0,
-			expectedErr:       queue.OffsetNotFoundError,
-		},
+		{name: "First element", offset: 2, expectedNewOffset: 3, expectedElement: 3, expectedErr: nil},
+		{name: "Last element", offset: 5, expectedNewOffset: 5, expectedElement: 5, expectedErr: nil},
+		{name: "Old missed element", offset: 0, expectedNewOffset: 3, expectedElement: 3, expectedErr: nil},
+		{name: "Not exists offset", offset: 100, expectedNewOffset: 5, expectedElement: 0, expectedErr: queue.OffsetNotFoundError},
 	}
 
-	q := queue.NewQueue[int](3)
+	q := queue.NewQueue[int](configuration.Queue{Size: 3})
 	q.Append(1)
 	q.Append(2)
 	q.Append(3)
@@ -112,7 +89,7 @@ func TestQueue_GetByOffset(t *testing.T) {
 }
 
 func TestQueue_GetLast(t *testing.T) {
-	q := queue.NewQueue[int](30)
+	q := queue.NewQueue[int](configuration.Queue{Size: 30})
 	_, _, err := q.GetLast()
 	require.ErrorIs(t, err, queue.IsEmpty)
 

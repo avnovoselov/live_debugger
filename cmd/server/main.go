@@ -1,9 +1,14 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
+	"io/fs"
+	"os"
 
+	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"github.com/avnovoselov/live_debugger/internal/queue"
 	"github.com/avnovoselov/live_debugger/internal/server"
 	"github.com/avnovoselov/live_debugger/pkg/live_debugger"
@@ -11,24 +16,27 @@ import (
 
 func main() {
 	var (
-		logger *zap.Logger
-		err    error
+		fileSystem fs.FS
+		cfg        configuration.Common
+
+		err error
 	)
 
-	upg := &websocket.Upgrader{}
-	q := queue.NewQueue[live_debugger.LogDTO](1000)
+	fileSystem = os.DirFS("./")
+	parser := configuration.NewParser(fileSystem)
 
-	if logger, err = zap.NewProduction(); err != nil {
+	if cfg, err = parser.Parse("configuration.toml"); err != nil {
 		panic(err)
 	}
 
-	//nolint:errcheck
-	//goland:noinspection GoUnhandledErrorResult
-	defer logger.Sync()
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	inHandler := server.NewInHandler(q, upg, logger)
-	outHandler := server.NewOutHandler(q, upg, logger)
+	upg := &websocket.Upgrader{}
+	q := queue.NewQueue[live_debugger.LogDTO](cfg.Queue)
 
-	s := server.NewServer("1.0.0", "/in", "/out", "127.0.0.1:8080", inHandler, outHandler)
+	inHandler := server.NewInHandler(q, upg)
+	outHandler := server.NewOutHandler(q, upg, cfg.Server)
+
+	s := server.NewServer(cfg.Server, inHandler, outHandler)
 	s.Run()
 }

@@ -1,0 +1,14 @@
+[logger]
+level = "DEBUG"
+
+[server]
+ip = "127.0.0.1"
+port = "8080"
+in_location = "/in"
+out_location = "/out"
+amount_of_sequentially_error_to_break = 10
+throttle_duration_ms = 500
+sleep_after_error_duration_ms = 500
+
+[queue]
+size = 1000

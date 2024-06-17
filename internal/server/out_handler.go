@@ -6,74 +6,88 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog/log"
 
+	"github.com/avnovoselov/live_debugger/internal/configuration"
+	"github.com/avnovoselov/live_debugger/internal/util"
 	"github.com/avnovoselov/live_debugger/pkg/live_debugger"
 )
 
+// OutHandler - handle outgoing logging streams
 type OutHandler struct {
-	upg    upgrader
-	logger *zap.Logger
-	queue  queue[live_debugger.LogDTO]
+	upg   upgrader
+	queue queue[live_debugger.LogDTO]
+
+	amountOfSequentiallyErrorToBreak int
+
+	throttleDurationMs        time.Duration
+	sleepAfterErrorDurationMs time.Duration
 }
 
-func NewOutHandler(queue queue[live_debugger.LogDTO], upg upgrader, logger *zap.Logger) *OutHandler {
+// NewOutHandler - OutHandler constructor
+func NewOutHandler(
+	queue queue[live_debugger.LogDTO],
+	upg upgrader,
+	server configuration.Server,
+) *OutHandler {
 	return &OutHandler{
-		upg:    upg,
-		logger: logger,
-		queue:  queue,
+		upg:                              upg,
+		queue:                            queue,
+		amountOfSequentiallyErrorToBreak: server.AmountOfSequentiallyErrorToBreak,
+		throttleDurationMs:               util.IntToMillisecond(server.ThrottleDurationMs),
+		sleepAfterErrorDurationMs:        util.IntToMillisecond(server.SleepAfterErrorDurationMs),
 	}
 }
 
 // ServeHTTP - http.Handler interface implementation
 func (h OutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var (
-		log                live_debugger.LogDTO
-		conn               *websocket.Conn
-		err                error
-		errorSequenceCount int
-		previousOffset     uint64
-		currentOffset      uint64
+		logDTO live_debugger.LogDTO
+		conn   *websocket.Conn
+
+		err                       error
+		amountOfSequentiallyError int
+		previousOffset            uint64
+		currentOffset             uint64
+
+		fields = make(map[string]any)
 	)
 
 	if conn, err = h.wsUpgrade(w, r); err != nil {
-		h.logger.Error(err.Error())
+		log.Error().Err(err)
 		return
 	}
 
-	fields := []zap.Field{
-		zap.String("localAddress", conn.LocalAddr().String()),
-		zap.String("remoteAddress", conn.RemoteAddr().String()),
-	}
+	fields["localAddress"] = conn.LocalAddr().String()
+	fields["remoteAddress"] = conn.RemoteAddr().String()
 
-	h.logger.Info("New connection", fields...)
+	log.Info().Fields(fields).Msg("New connection")
 
 	//nolint:errcheck
 	//goland:noinspection GoUnhandledErrorResult
 	defer conn.Close()
 
 	for {
-		time.Sleep(time.Second / 2)
-		log, currentOffset, err = h.queue.GetLast()
+		time.Sleep(h.throttleDurationMs)
+		logDTO, currentOffset, err = h.queue.GetLast()
 		if err != nil {
-			time.Sleep(time.Second)
+			time.Sleep(h.sleepAfterErrorDurationMs)
 			continue
 		}
 		if currentOffset == previousOffset {
-			time.Sleep(time.Second)
+			time.Sleep(h.sleepAfterErrorDurationMs)
 			continue
 		}
 
-		if err = h.handleMessage(conn, log); err != nil {
-			h.logger.Error(err.Error())
-			errorSequenceCount += 1
+		if err = h.sendMessage(conn, logDTO); err != nil {
+			log.Error().Err(err)
+			amountOfSequentiallyError += 1
 		} else {
 			previousOffset = currentOffset
-			errorSequenceCount = 0
+			amountOfSequentiallyError = 0
 		}
 
-		// todo configuration and logging
-		if errorSequenceCount > 10 {
+		if amountOfSequentiallyError > h.amountOfSequentiallyErrorToBreak {
 			break
 		}
 	}
@@ -89,7 +103,8 @@ func (h OutHandler) wsUpgrade(w http.ResponseWriter, r *http.Request) (conn *web
 	return
 }
 
-func (h OutHandler) handleMessage(conn *websocket.Conn, log live_debugger.LogDTO) (err error) {
+// sendMessage - send message to client
+func (h OutHandler) sendMessage(conn *websocket.Conn, log live_debugger.LogDTO) (err error) {
 	var message []byte
 
 	if message, err = live_debugger.EncodeJSON[live_debugger.LogDTO](log); err != nil {

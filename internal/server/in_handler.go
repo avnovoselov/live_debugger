@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
+	"github.com/rs/zerolog/log"
 
 	"github.com/avnovoselov/live_debugger/internal/util"
 	"github.com/avnovoselov/live_debugger/pkg/live_debugger"
@@ -22,19 +22,17 @@ var (
 	InHandlerWsUpgradeError                     = inHandlerEB(errors.New("ws upgrade error"))
 )
 
-// InHandler - handler processes incoming logging stream
+// InHandler - handle incoming logging streams
 type InHandler struct {
-	queue  queue[live_debugger.LogDTO]
-	upg    upgrader
-	logger *zap.Logger
+	queue queue[live_debugger.LogDTO]
+	upg   upgrader
 }
 
 // NewInHandler - InHandler constructor
-func NewInHandler(queue queue[live_debugger.LogDTO], upg upgrader, logger *zap.Logger) *InHandler {
+func NewInHandler(queue queue[live_debugger.LogDTO], upg upgrader) *InHandler {
 	return &InHandler{
-		queue:  queue,
-		upg:    upg,
-		logger: logger,
+		queue: queue,
+		upg:   upg,
 	}
 }
 
@@ -45,19 +43,19 @@ func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		req    live_debugger.LogDTO
 		err    error
 		offset uint64
+
+		fields = make(map[string]any)
 	)
 
 	if conn, err = h.wsUpgrade(w, r); err != nil {
-		h.logger.Error(err.Error())
+		log.Error().Err(err)
 		return
 	}
 
-	fields := []zap.Field{
-		zap.String("localAddress", conn.LocalAddr().String()),
-		zap.String("remoteAddress", conn.RemoteAddr().String()),
-	}
+	fields["localAddress"] = conn.LocalAddr().String()
+	fields["remoteAddress"] = conn.RemoteAddr().String()
 
-	h.logger.Info("New connection", fields...)
+	log.Info().Fields(fields).Msg("New connection")
 
 	//goland:noinspection GoUnhandledErrorResult
 	defer conn.Close()
@@ -65,28 +63,26 @@ func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for {
 		messageType, message, err := conn.ReadMessage()
 
-		fields = append(
-			fields,
-			zap.String("message", string(message)),
-			zap.Int("messageType", messageType),
-		)
-		h.logger.Info("Receive message", fields...)
+		fields["message"] = string(message)
+		fields["messageType"] = messageType
+
+		log.Debug().Fields(fields).Msg("Receive message")
 
 		if err != nil {
-			h.logger.Error(err.Error(), fields...)
+			log.Error().Fields(fields).Err(err)
 			break
 		}
 		if req, err = h.decodeRequest(messageType, message); err != nil {
-			h.logger.Error(err.Error(), fields...)
+			log.Error().Fields(fields).Err(err)
 			continue
 		}
 		if offset, err = h.handleMessage(conn, req); err != nil {
-			h.logger.Error(err.Error(), fields...)
+			log.Error().Fields(fields).Err(err)
 			break
 		}
 
-		fields = append(fields, zap.Uint64("offset", offset))
-		h.logger.Info("Send message", fields...)
+		fields["offset"] = offset
+		log.Debug().Fields(fields).Msg("Message handled")
 	}
 }
 

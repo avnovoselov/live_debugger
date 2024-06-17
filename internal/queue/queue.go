@@ -2,6 +2,7 @@ package queue
 
 import (
 	"errors"
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"sync"
 
 	"github.com/avnovoselov/live_debugger/internal/util"
@@ -24,7 +25,7 @@ var (
 //
 // execs synchronously using sync.RWMutex to prevent race condition.
 type Queue[Element any] struct {
-	// queue dimensions helpers
+	// queue dimensions variables
 	min  uint64
 	max  uint64
 	size uint64
@@ -37,9 +38,9 @@ type Queue[Element any] struct {
 }
 
 // NewQueue - Queue constructor.
-func NewQueue[Element any](size uint64) *Queue[Element] {
+func NewQueue[Element any](configuration configuration.Queue) *Queue[Element] {
 	return &Queue[Element]{
-		size:     size,
+		size:     configuration.Size,
 		elements: make(map[uint64]Element),
 		mu:       sync.RWMutex{},
 	}

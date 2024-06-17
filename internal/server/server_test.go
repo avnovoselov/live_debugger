@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"github.com/avnovoselov/live_debugger/internal/configuration"
 	"testing"
 	"time"
 
@@ -11,14 +12,18 @@ import (
 
 func TestServer_Run(t *testing.T) {
 	ctx := context.Background()
-	version := "1.0.0"
-	inLocation := "/in"
-	outLocation := "/out"
-	address := "127.0.0.1:36768"
+
 	inHandler := mocks.NewHttpHandler(t)
 	outHandler := mocks.NewHttpHandler(t)
 
-	srv := server.NewServer(version, inLocation, outLocation, address, inHandler, outHandler)
+	cfg := configuration.Server{
+		IP:          "127.0.0.1",
+		Port:        "36768",
+		InLocation:  "/in",
+		OutLocation: "/out",
+	}
+
+	srv := server.NewServer(cfg, inHandler, outHandler)
 
 	//nolint:errcheck
 	//goland:noinspection GoUnhandledErrorResult
