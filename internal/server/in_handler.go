@@ -37,7 +37,7 @@ func NewInHandler(queue queue[live_debugger.LogDTO], upg upgrader) *InHandler {
 }
 
 // ServeHTTP - http.Handler interface implementation
-func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h InHandler) ServeHTTP(w responseWriter, r *http.Request) {
 	var (
 		conn   *websocket.Conn
 		req    live_debugger.LogDTO
@@ -51,9 +51,12 @@ func (h InHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error().Err(err)
 		return
 	}
-
-	fields["localAddress"] = conn.LocalAddr().String()
-	fields["remoteAddress"] = conn.RemoteAddr().String()
+	if conn.LocalAddr() != nil {
+		fields["localAddress"] = conn.LocalAddr().String()
+	}
+	if conn.RemoteAddr() != nil {
+		fields["remoteAddress"] = conn.RemoteAddr().String()
+	}
 
 	log.Info().Fields(fields).Msg("New connection")
 

@@ -18,3 +18,7 @@ type httpHandler interface {
 type upgrader interface {
 	Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (*websocket.Conn, error)
 }
+
+type responseWriter interface {
+	http.ResponseWriter
+}

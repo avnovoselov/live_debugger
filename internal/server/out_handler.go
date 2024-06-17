@@ -40,7 +40,7 @@ func NewOutHandler(
 }
 
 // ServeHTTP - http.Handler interface implementation
-func (h OutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h OutHandler) ServeHTTP(w responseWriter, r *http.Request) {
 	var (
 		logDTO live_debugger.LogDTO
 		conn   *websocket.Conn
@@ -58,8 +58,12 @@ func (h OutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fields["localAddress"] = conn.LocalAddr().String()
-	fields["remoteAddress"] = conn.RemoteAddr().String()
+	if conn.LocalAddr() != nil {
+		fields["localAddress"] = conn.LocalAddr().String()
+	}
+	if conn.RemoteAddr() != nil {
+		fields["remoteAddress"] = conn.RemoteAddr().String()
+	}
 
 	log.Info().Fields(fields).Msg("New connection")
 
@@ -68,7 +72,6 @@ func (h OutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	for {
-		time.Sleep(h.throttleDurationMs)
 		logDTO, currentOffset, err = h.queue.GetLast()
 		if err != nil {
 			time.Sleep(h.sleepAfterErrorDurationMs)
@@ -90,6 +93,8 @@ func (h OutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if amountOfSequentiallyError > h.amountOfSequentiallyErrorToBreak {
 			break
 		}
+
+		time.Sleep(h.throttleDurationMs)
 	}
 }
 
